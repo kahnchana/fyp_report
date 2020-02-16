@@ -1,0 +1,18 @@
+\chapter{Discussion and Conclusion}
+
+We propose two components essential for autonomous systems that interact with their surrounding environments. These are in fact two of the key computer vision problems that have been attempted for a long time. 
+
+Firstly, we present an end-to-end system capable of performing multi-object tracking by combining a range of advances in object detection and reidentification along with our novel architectures and loss functions. Further, we work on a novel step by building a separate LSTM branch to estimate the similarity feature map for the next time step of a given track. The Siamese Networks may be viewed as a two-step version of our extension, whereas this replacement with an LSTM is more of a generalized version capable of generating a better feature set. The key expectation with this addition is the overcoming of identity switches and lost tracks in the case of occlusions. Appearance features tend to change significantly during an occlusion, especially when an object undergoes rotations, and our extension overcomes this by modeling the appearance changing pattern over time. 
+
+Thereafter, we proposed a probabilistic graphical model based framework for panoptic segmentation. Our CRF model with two different kinds of random variable, named Bipartite CRF or BCRF, is capable of optimally combining the predictions from a semantic segmentation model and an instance segmentation model to obtain a good panoptic segmentation. We use different energy functions in our BCRF to encourage the spatial, appearance, and instance-to-semantic consistency of the panoptic segmentation. An iterative mean field algorithm was then used to find the panoptic labeling that approximately maximizes the conditional probability of the labeling given the image. We further showed that the proposed BCRF framework can be used as an embedded module within a deep neural network to obtain superior results in panoptic segmentation.
+
+\section{Principles, Relationships and Generalizations inferred from results}
+As depicted in the results section our tracker has shown improvements and in relation to MOT evaluation metrics. The improvements shown in the KITTI dataset (which has 9 separate classes) shows how our system has generalized multi class tracking without the need for training separate computationally expensive re-identification networks. MOT16 contains data belonging to the pedestrian class only but the movement of objects in this object is subjugated to more occlusions and random movements compared to the KITTI dataset. The improvement MOTA of MOT16 dataset indicates signs that our system handles occlusions better. 
+
+Since we have only intermediate results for panoptic segmentation for a small test class it can only be inferred that this system has potential to improve panoptic segmentation, but more training and large-scale evaluation is required to state with more certainty.
+
+\section{Problems and Exceptions to the Generalizations}
+The results shows that MOTP of our tracker is considerably low in MOT16 dataset in comparison to other systems. This indicates that the LSTM network is unable to handle rapid variations of the bounding box parameters. This is to be expected as the bounding box variations in datasets such as MOT16 is much more chaotic in cases where the pedestrian is rotating while walking and walking in general.
+
+\section{Agreements/Disagreements with previously published work}
+The results agree with recently published systems such as Deep Sort []. It is expected that as ML decreases the MOTA to increase as it reduces the number of false negatives considerably. This correlation is depicted in our results.
