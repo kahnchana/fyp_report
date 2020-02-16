@@ -1,3 +1,9 @@
 # fyp_report
 
-Refer to manual.pdf for setting up latex
+Run the following to compile the report. 
+
+```
+latex thesis
+bibtex thesis
+latex thesis
+```
