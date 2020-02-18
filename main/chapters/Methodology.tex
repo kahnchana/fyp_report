@@ -1,4 +1,5 @@
 \chapter{Methodology}
+\label{chapter:method}
 
 \section{Overview}
 The two main core objectives of our work involve in producing an online multi object tracker, which incorporates the spatiotemporal coherence of object motion together with the appearance consistency and producing a panoptic segmentation of the video feed by taking into account the bipartite potentials.
@@ -11,13 +12,12 @@ In this section, we describe our approach for online real-time multi-object trac
 \subsection{LSTM network}
 
 \begin{figure*}[t]
-	\vspace{-0.7cm}
 	\centering
 	\includegraphics[ width=\textwidth]{figs/LSTM_network.png}
 	\vspace{-0.5cm}
-	\caption{Structure of the proposed LSTM network\vspace{-0.4cm}}
+	\caption{Structure of the proposed LSTM network}
 	\label{fig:LSTM_network}
-	\vspace{-0.0cm}
+	\vspace{0.5cm}
 \end{figure*}
 
 Consider a video as a sequence of image frames i.e. $V = I_{0},I_{1},...,I_{n}$ where $I_{k}$ s a matrix of fixed dimensions. Given detections $D = D_{0},D_{1},...,D_{n}$, for the objects present in each frame , where each  is a list of bounding box locations, class predictions, and other information corresponding to objects contained in the image , our goal here is to estimate the bounding box co-ordinates $B_{k,i}$ for each object in the following frame; $I_{k+1}$. Note that  $B_{k,i} = (x_{k,i},y_{k,i},h_{k,i},w_{k,i})$ where $x,y,h,w$ correspond to $x,y$ co-ordinates of centre, height and width of the bounding box for the $i^{th}$ object in the $k^{th}$ frame. Further, this system would operate in an online setting where at any given instance when time $t = k$, the frames, hence detections too are present only up to $I_{k}$ and $D_{k}$ espectively. Further the $i^{th}$ object will be consistent across consecutive frames (obtained using the output of the system) until the object disappears. The LSTM component can be viewed as a function $L$ with $L(D_{0},D_{1},...,D_{k}) = F_{k}$ where $F_{k}$ is a list of temporally aware feature maps $F_{k,i}$ corresponding to each object $i$ present within $D_{k}$. The remaining two functions; $C$ and $R$ correspond to classification (selecting anchor) and regression (estimating deviation from anchor) of the exact bounding box targets. Each bounding box datum $(x,y,h,w)$ is interpreted as a deviation from the previous time step $(\dot{x},\dot{y},\dot{h},\dot{w})$ which reduces the mean of those variables. Note that due to the discrete nature of data, $\dot{x} = x - x_{i-1}$ Using normalized co-ordinates $(x,y,h,w)$ values divided by relevant image dimensions); this range will be within $(-1, 1)$ and an optimum number of anchors can be used to estimate this value as a classification problem. 
@@ -38,9 +38,9 @@ $$
 	\centering
 	\includegraphics[ width=\textwidth]{figs/tracker.png}
 	\vspace{-0.5cm}
-	\caption{Overview of the overall 2D tracking system\vspace{-0.4cm}}
+	\caption{Overview of the overall 2D tracking system}
 	\label{fig:tracker}
-	\vspace{-0.0cm}
+	\vspace{0.4cm}
 \end{figure*}
 
 \subsection{Appearance similarity}
@@ -79,53 +79,34 @@ where $\gamma$ is the occluded percentage of the matched detection and defined a
 \par Deletion of tracks and addition of new tracks is carried very similar to the approach carried out in the Deep SORT \cite{DeepSiam:deepSort} work.
 
 \subsection{Extensibility to BEV space}
+The seemingly simple but effective fact that ‘overlapping in BEV space projections cannot happen for the objects detected and predicted in 3D is exploited here through a constrained optimization problem. This work relates to the possible improvements that could be done on the system and detailed in \ref{chapter:appendix1}.
 
-The seemingly simple but effective fact that ‘overlapping in BEV space projections cannot happen for the objects detected and predicted in 3D’ is exploited here through a constrained optimization problem.
-\par An LSTM network is trained to predict the change of parameter ‘q’ between consecutive frames. That is, for given $\dot{q_{t-k}},...,\dot{q_{t-1}},\dot{q_{t}} \rightarrow \dot{q_{t+1}}$ is predicted where $\dot{q_{t}} = q_{t} - q_{t-1}$ and $q \in (C,S,\theta)$. Here;$C = C_{x}, C_{y}, C_{z}$ (the centre co-ordinates of the object), $S = (h,w,l)$ (object dimensions) and $\theta$ is the angle of rotation around the vertical axis.
-The loss function for training the parameter predictor (LSTM) is as follows. 
+\subsection{LSTM based data association for end to end trainability}
 
-\begin{multline}
-LOSS_{pred}(p,\beta,\alpha,\delta,\theta) = \\
-\sum_{i=1}^{N} \beta_{class_{i}} \Biggl( \Biggl( \sum_{p\in (C,S)}\alpha_{p}L_{Huber,\delta_{p}}(p_{pred},p_{gt}) \Biggr) + \\ \alpha_{\theta}L_{\theta}(\theta_{pred},\theta_{gt})_{object=i} \Biggr)
-\tag{7}
-\end{multline}
+\begin{figure*}[t]
+	\centering
+	\includegraphics[width=0.5\textwidth]{figs/lstm_associate.png}
+	\vspace{-0.3cm}
+	\caption{Association LSTM}
+	\label{fig:LSTM_network}
+	\vspace{0.5cm}
+\end{figure*}
 
-Here $P_{pred}$ refers to the predicted parameter and $P_{gt}$ refers to the ground truth parameter. 
-\par $\delta_{p}$ is a parameter based learnable which in turn is the quadratic-linear margin of the Huber loss function and $\alpha_{p}$ or $\alpha_{\theta}$ is a regressed parameter based learnable (where in the case of $\alpha_{\theta}$, the regressed parameter is $\theta$ and $\alpha_{p}$ is similarly interpreted whereas the scope of $\alpha_{p}$ is different from that of $\delta_{p}$, considering the impact on cost function) and $\beta_{class i}$ is the class based learnable parameter w.r.t. the class of the $i^{th}$ object.
-\par Here, $p = C_{x},C_{y},C_{z},h,w,l$ , $\beta = \beta_{class} | class\in classes$, $\alpha=[[\alpha_{p}]_{p \in parameters}, \alpha_{\theta}]$ and $\delta=[\delta_{p}]_{p \in parameters}$.
-\par Due to the discontinuous nature of the parameter $\theta$ at the two extreme ends of its domain $[-\pi, \pi]$, and due to the fact that $\theta = \pi$ and $\theta = -\pi$ depict the same orientation, it is not directly incorporated into the Huber loss function. It is handled separately using $L_{\theta}$ function \cite{DeepSiam:geometry}, where $\theta_{pred},\theta_{gt}$ are predicted and ground truth values of the parameter $\theta$ respectively.
-$$
-L_{\theta}(\theta_{pred},\theta_{gt}) = 0.5(1 - \cos(\theta_{gt} - \theta_{pred})) \eqno{(8)}
-$$
+The multi object tracker network uses the Hungarian algorithm for data association where this algorithm is a definite setup having an algorithmic complexity of $O(n^3)$. However the system cannot be back propagated through this implementation due to the fact that Hungarian algorithm is not differentiable. There are approaches from probabilistic view points as in \cite{russel}  and with learning perspective as presented in \cite{DeepSiam:multitarget} for obtaining a data driven system. Several experiments were conducted with data association on MOT tracking dataset based on the methodology presented in [19]. The system developed is shown in the figure below and was designed from scratch using tensorflow API. The system was designed initially to handle and check the repeated lengthy tracks in the dataset without the intervention of birth and death processes. Here the system is getting trained to build up a probability matrix $A_t$ which presents associations at time t. Thus $A_t^i=[p_{i,1},p_{i,2},p_{i,3},\ldots,p_{i,m},p_{i,m+1}]$ where  $p_{i,j}$ represents the probability of $i^{th}$  target being denoted by $j^{th}$ measurement out of m measurements for the frame (i.e. m detections).Here $\sum_{j=1}^{m+1}p_{i,j}=1$ which is achieved by using softmax on the row.
 
-\subsection{Constraints as penalties}
-First, we introduce the hard constraint on BEV space that projections of the objects on to the x-z plane in general co-ordinates have no intersection. However, most of the research is focused on building up 3D bounding boxes of objects where the rectangular projection does not create a clear cut segmentation of the object (ex: human) on BEV space. Therefore, we minimize an additional term as follows.
-$$
-I = \sum_{v_{i},v_{j} \in objects_{pred}, i \neq j} (1 + \xi^{2}_{class_{i}, class_{j}})(v_{i_{BEV}} \cap v_{j_{BEV}})  \eqno{(9)}
-$$
-Where $v_{i_{BEV}}$ is the projection of the bounding box of the object $v_{i}$ onto the BEV space and $\xi_{class_{i},class{j}}$ is a learnable based on object classes under intersection which in turn forms a set $\xi_{class \times class}$ and each term is squared to ensure positivity.
-Therefore, the final minimization function is as follows,
-$$
-L(p,\beta, \alpha, \delta, \theta, \{\xi\}) = LOSS_{pred}(p,\beta, \alpha, \delta, \theta) + I \eqno{(10)}
-$$
-However, at an optimum point $(p^{*},\beta^{*}, \alpha^{*}, \delta^{*}, \theta^{*}, \{\xi\}^{*})$; the loss function obeys a feature observed in Lagrange constrained optimization that;
-$\nabla L = 0$ where $\nabla$ refers to the discrete derivative (this statement is intuitive only with the discrete derivative).
-\par This implies that:
-$$
-\nabla_{p,\theta}Loss_{pred} = -(1 + \xi^{2}_{class_{i}, class_{j}})\nabla_{p,\theta}(v_{i_{BEV}} \cap v_{j_{BEV}})  \eqno{(11)}
-$$
-for all classes at optimum parameters $p^{*},\theta^{*}$. Therefore $(1 + \xi^{2}_{class_{i}, class_{j}})$ behaves similar to a Lagrange multiplier. This setting helps to build up a network that trains not only based on the individual performance per object but also encountering the joint effect of multiple object scenarios.
+The excess column presented by the last probability shows the probability that none of measurements being matched for the respective track and this track will potentially be terminated in next stages of the process.The input $C_t\in R^{N\times M}$ is the matrix created through the second norm between the state vector $x_i$ of the target and the measurement having feature vector $z_j$.Therefore, $C_t^{i,j}=\ xi-zj2$
+
+Negative log likelihood loss was used as the loss function for training. Ability to track multiple objects simultaneously in real-time and pixel-level awareness for both stuff (background) and things (objects), are two of the fundamental vision-based challenges that modern autonomous and quasi-autonomous systems are faced with. We introduce two separate novel frameworks for both problems which improve on the current state-of-the-art systems.
 
 
 \section{Panoptic Segmentation}
+Our work is concentrated to the assignment of a semantic label and an instance label for each pixel in an image using a novel approach of incorporating bipartite potentials to improve the segmentation accuracy.
 
 \subsection{Background: Conditional Random Fields}
 
 Conditional Random Fields (CRFs) are a class of statistical modeling method used for structured prediction. A CRF, used in the context of pixel-wise label prediction, models pixel labels as random variables that form a Markov Random Field (MRF) when conditioned upon the image. CRFs have primarily been used in computer vision for semantic image segmentation. In this setting, CRFs encourage the desirable properties of a good segmentation, such as the spatial consistency (e.g. spatially neighboring pixels should have the same label) and color consistency (e.g. a semantic segmentation boundary should correspond to a edge in the image) through various energy functions used in the formulation. A CRF formulation usually has energy terms arising from an imperfect classifier (sometimes known as the unary energy) and energy terms encouraging the consistency properties of the segmentation (sometimes known as the pairwise energy). Some semantic CRF models also include higher order energy terms to encourage higher order consistency properties such as consistency of the labeling within super-pixels~\cite{arnab_eccv_2016}.
 
 Once an appropriate energy function is formed, the optimal labeling is found as the labeling that minimizes the CRF energy (or equivalently, maximizes the probability). This is known as the inference of the CRF. The exact inference of a CRF with dense pairwise connections is intractable and hence approximate inference methods such as mean field variational inference has to be utilized to solve the CRF in reasonable time~\cite{densecrf}. For a detailed treatment of CRFs, the reader is referred to~\cite{Koller_book}. 
-
-\input{figs/algo.tex}
 
 \subsection{Bipartite CRFs}
 \label{sec:body}
@@ -234,7 +215,6 @@ To make our model flexible, we deliberately include a number of parameters in th
 	\item Label compatibility matrices: The two functions $\mu(., .)$ and $\eta(., .)$ are initialized to have a zero cost for a pair identical labels and a fixed cost for any combination of two different labels. They are then given the freedom to automatically learn the relative penalty strengths for different label combinations.
 \end{enumerate}
 
-\input{figs/tbl_pascal_voc}
 
 \subsection{BCRF in a Deep Network}
 In this section, we discuss how BCRF can be used in a deep network. In~\cite{Zhen_ICCV15_CRFRNN}, authors showed that, in the semantic segmentation setting, mean field inference of a CRF with Gaussian pairwise potentials can be formulated as a Recurrent Neural Network (RNN). Since our BCRF also uses an iterative mean field algorithm of similar nature, it is readily adaptable into the RNN based inference described in~\cite{Zhen_ICCV15_CRFRNN}. Therefore, BCRF can be a first-class citizen of a deep network performing panoptic segmentation. Importantly, this formulation allows automatic optimization of the BCRF parameters described in Section~\ref{sec:infer}, using backpropagation and a gradient descent algorithm such as stochastic gradient descent (SGD). This is a major advantage since it allows us to increase the number of parameters used in BCRF, and hence increase its flexibility, without adding to the burden of manual parameter optimization.
