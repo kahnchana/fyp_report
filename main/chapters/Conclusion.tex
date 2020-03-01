@@ -19,7 +19,7 @@ The system implemented for panoptic segmentation through the aggregation of two 
 
 
 \section{Agreements/Disagreements with previously published work}
-The results agree with recently published systems such as Deep Sort \cite{DeepSiam:deepSort}. It is expected that as ML decreases when MOTA increases as it reduces the number of false negatives considerably. This correlation is depicted in our results.
+The results agree with recently published systems such as Deep SORT \cite{DeepSiam:deepSort}. It is expected that as ML decreases when MOTA increases as it reduces the number of false negatives considerably. This correlation is depicted in our results.
 However the experiments that had been run basing the data association LSTM network did not turn successful as presented in \cite{DeepSiam:MilanL0RS16}. However in \cite{DeepSiam:MilanL0RS16} it describes as a network not promised to have high accuracy but possesses higher frame rate in comparison to the accuracy. As a result, the lack of data association capability and the retarded smoothness in convergence could be expected when single module is isolated from the aforementioned network and tried to train starting from Xavier initialization.
 
 We were able to replicate the recent most state of the art systems to obtain the unary classifications on image segmentation. The approach followed by our system agrees with the work published by authors in \cite{Zhen_ICCV15_CRFRNN} for refining the output of a single head semantic segmentation network using conditional random fields. Our system was integrated on top of a state of the art system presented in [76]. We used the loss function presented in \cite{Anurag17} for training.  
